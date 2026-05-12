@@ -17,18 +17,18 @@ export default function Tienda() {
   const [mostrarFiltros, setMostrarFiltros] = useState(false)
   const [cargando, setCargando] = useState(true)
 
-  useEffect(() => {
-    fetch('/api/productos')
-      .then(r => r.json())
-      .then(data => {
-        setProductos(data)
-        setCargando(false)
-      })
-      .catch(() => {
-        toast.error('Error cargando productos')
-        setCargando(false)
-      })
-  }, [])
+useEffect(() => {
+  fetch('/api/productos', { cache: 'no-store' }) // ← AGREGA ESTO
+    .then(r => r.json())
+    .then(data => {
+      setProductos(data);
+      setCargando(false);
+    })
+    .catch(() => {
+      toast.error("Error cargando productos");
+      setCargando(false);
+    });
+}, []);
 
   const categorias = [
     { nombre: 'Todos', icon: Sparkles },
