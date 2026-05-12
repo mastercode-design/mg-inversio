@@ -1,195 +1,187 @@
-'use client'
-import { useState, useEffect } from 'react'
+'use client';
+import { useState, useEffect } from 'react';
 
-export default function Admin() {
-  const [productos, setProductos] = useState([])
-  const [loading, setLoading] = useState(false)
-  const [imageFile, setImageFile] = useState(null)
-  const [imagePreview, setImagePreview] = useState('')
+export default function AdminPage() {
+  const [productos, setProductos] = useState([]);
+  const [nombre, setNombre] = useState('');
+  const [precio, setPrecio] = useState('');
+  const [categoria, setCategoria] = useState('Bolsos Dama');
+  const [file, setFile] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  const [form, setForm] = useState({
-    name: '',
-    price: '',
-    category: 'Bolsos Dama',
-    premium: false,
-    img: ''
-  })
-
-  // Cargar productos al entrar
   useEffect(() => {
-    fetchProductos()
-  }, [])
+    fetchProductos();
+  }, []);
 
   const fetchProductos = async () => {
-    const res = await fetch('/api/productos')
-    const data = await res.json()
-    setProductos(data)
-  }
-
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0]
-    if (file) {
-      setImageFile(file)
-      setImagePreview(URL.createObjectURL(file))
-    }
-  }
+    const res = await fetch('/api/productos');
+    const data = await res.json();
+    setProductos(data);
+  };
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setLoading(true)
+    e.preventDefault();
+    if (!file ||!nombre ||!precio) {
+      alert('Completa todos los campos');
+      return;
+    }
 
+    setLoading(true);
     try {
-      let imageUrl = form.img
+      const uploadRes = await fetch(`/api/upload?filename=${encodeURIComponent(file.name)}`, {
+        method: 'POST',
+        body: file,
+      });
+      const blob = await uploadRes.json();
 
-      // Si hay archivo, súbelo a Vercel Blob
-      if (imageFile) {
-        const response = await fetch(`/api/upload?filename=${imageFile.name}`, {
-          method: 'POST',
-          body: imageFile,
-        });
+      if (!uploadRes.ok) throw new Error(blob.error || 'Error subiendo imagen');
 
-        if (!response.ok) throw new Error('Error subiendo imagen')
-
-        const blob = await response.json();
-        imageUrl = blob.url
-      }
-
-      // Guardar producto
-      const res = await fetch('/api/productos', {
+      const createRes = await fetch('/api/productos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-         ...form,
-          price: Number(form.price),
-          img: imageUrl
-        })
-      })
+          nombre,
+          precio: Number(precio),
+          categoria,
+          imagen: blob.url,
+        }),
+      });
 
-      if (!res.ok) throw new Error('Error guardando producto')
+      if (!createRes.ok) throw new Error('Error creando producto');
 
-      // Limpiar form
-      setForm({ name: '', price: '', category: 'Bolsos Dama', premium: false, img: '' })
-      setImageFile(null)
-      setImagePreview('')
-      fetchProductos()
-      alert('Producto agregado ✅')
+      const nuevoProducto = await createRes.json();
+      setProductos(prev => [nuevoProducto,...prev]);
 
+      setNombre('');
+      setPrecio('');
+      setFile(null);
+      alert('Producto agregado');
     } catch (error) {
-      alert('Error: ' + error.message)
+      alert(error.message);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  const deleteProduct = async (id) => {
-    if (!confirm('¿Borrar este producto?')) return
-    await fetch(`/api/productos/${id}`, { method: 'DELETE' })
-    fetchProductos()
-  }
+  const handleDelete = async (id) => {
+    if (!confirm('¿Seguro que quieres borrar este producto?')) return;
+
+    const res = await fetch(`/api/productos/${id}`, { method: 'DELETE' });
+
+    if (res.ok) {
+      setProductos(prev => prev.filter(p => p.id!== id));
+      alert('Producto borrado');
+    } else {
+      alert('Error al borrar');
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-black text-white p-6">
-      <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-8">
+    <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px' }}>
 
-        {/* FORM AGREGAR */}
         <div>
-          <h1 className="text-3xl font-bold text-yellow-400 mb-6">📦 Nuevo Producto</h1>
-          <form onSubmit={handleSubmit} className="space-y-4">
-
-            <div>
-              <label className="block text-yellow-400/80 mb-2">NOMBRE DEL PRODUCTO</label>
+          <h2>📦 Nuevo Producto</h2>
+          <form onSubmit={handleSubmit}>
+            <div style={{ marginBottom: '15px' }}>
+              <label>NOMBRE DEL PRODUCTO</label>
               <input
                 type="text"
-                value={form.name}
-                onChange={e => setForm({...form, name: e.target.value})}
-                className="w-full p-3 bg-black/40 border border-yellow-500/30 rounded-lg focus:border-yellow-400 outline-none"
-                required
+                value={nombre}
+                onChange={e => setNombre(e.target.value)}
+                style={{ width: '100%', padding: '8px', marginTop: '5px' }}
               />
             </div>
 
-            <div>
-              <label className="block text-yellow-400/80 mb-2">$ PRECIO</label>
+            <div style={{ marginBottom: '15px' }}>
+              <label>$ PRECIO</label>
               <input
                 type="number"
-                value={form.price}
-                onChange={e => setForm({...form, price: e.target.value})}
-                className="w-full p-3 bg-black/40 border border-yellow-500/30 rounded-lg focus:border-yellow-400 outline-none"
-                required
+                value={precio}
+                onChange={e => setPrecio(e.target.value)}
+                style={{ width: '100%', padding: '8px', marginTop: '5px' }}
               />
             </div>
 
-            <div>
-              <label className="block text-yellow-400/80 mb-2">CATEGORÍA</label>
+            <div style={{ marginBottom: '15px' }}>
+              <label>CATEGORÍA</label>
               <select
-                value={form.category}
-                onChange={e => setForm({...form, category: e.target.value})}
-                className="w-full p-3 bg-black/40 border border-yellow-500/30 rounded-lg focus:border-yellow-400 outline-none"
+                value={categoria}
+                onChange={e => setCategoria(e.target.value)}
+                style={{ width: '100%', padding: '8px', marginTop: '5px' }}
               >
                 <option>Bolsos Dama</option>
-                <option>Relojes</option>
-                <option>Joyas</option>
+                <option>Bolsos Caballero</option>
                 <option>Accesorios</option>
               </select>
             </div>
 
-            <div>
-              <label className="block text-yellow-400/80 mb-2">📸 IMAGEN DEL PRODUCTO</label>
+            <div style={{ marginBottom: '15px' }}>
+              <label>IMAGEN DEL PRODUCTO</label>
               <input
                 type="file"
                 accept="image/*"
-                onChange={handleImageUpload}
-                className="w-full p-3 bg-black/40 border border-yellow-500/30 rounded-lg text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-yellow-500 file:text-black file:font-bold hover:file:bg-yellow-400 cursor-pointer"
+                onChange={e => setFile(e.target.files[0])}
+                style={{ width: '100%', padding: '8px', marginTop: '5px' }}
               />
-              {imagePreview && (
-                <img src={imagePreview} alt="Preview" className="mt-3 h-40 rounded-lg object-cover border border-yellow-500/30" />
-              )}
-            </div>
-
-            <div className="flex items-center gap-3">
-              <input
-                type="checkbox"
-                checked={form.premium}
-                onChange={e => setForm({...form, premium: e.target.checked})}
-                className="w-5 h-5 accent-yellow-500"
-              />
-              <label>👑 Producto Premium</label>
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-4 bg-gradient-to-r from-yellow-500 to-amber-600 text-black font-bold rounded-lg hover:scale-105 transition disabled:opacity-50"
+              style={{
+                width: '100%',
+                padding: '12px',
+                background: '#FFD700',
+                border: 'none',
+                cursor: 'pointer',
+                fontWeight: 'bold'
+              }}
             >
-              {loading? 'Subiendo...' : '📁 Agregar Producto'}
+              {loading? 'Subiendo...' : 'Agregar Producto'}
             </button>
           </form>
         </div>
 
-        {/* INVENTARIO */}
         <div>
-          <h2 className="text-3xl font-bold text-yellow-400 mb-6">📦 Inventario ({productos.length})</h2>
-          <div className="space-y-3 max-h-[600px] overflow-y-auto">
-            {productos.length === 0 && <p className="text-white/50">No hay productos</p>}
-            {productos.map(p => (
-              <div key={p.id} className="flex gap-4 bg-black/40 border border-yellow-500/20 p-3 rounded-lg">
-                <img src={p.img} alt={p.name} className="w-20 h-20 object-cover rounded" />
-                <div className="flex-1">
-                  <p className="font-bold">{p.name}</p>
-                  <p className="text-yellow-400">${p.price}</p>
-                  <p className="text-sm text-white/60">{p.category}</p>
-                </div>
-                <button
-                  onClick={() => deleteProduct(p.id)}
-                  className="px-3 py-1 bg-red-500/20 text-red-400 rounded hover:bg-red-500/40"
-                >
-                  Borrar
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
+          <h2>📦 Inventario ({productos.length})</h2>
+          {productos.length === 0 && <p>No hay productos</p>}
 
+          {productos.map(producto => (
+            <div key={producto.id} style={{
+              display: 'flex',
+              gap: '15px',
+              marginBottom: '20px',
+              borderBottom: '1px solid #ddd',
+              paddingBottom: '15px'
+            }}>
+              <img
+                src={producto.imagen}
+                alt={producto.nombre}
+                style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px' }}
+              />
+              <div style={{ flex: 1 }}>
+                <h3 style={{ margin: '0 0 5px 0' }}>{producto.nombre}</h3>
+                <p style={{ margin: '0 0 5px 0' }}>${producto.precio}</p>
+                <p style={{ margin: 0, color: '#666' }}>{producto.categoria}</p>
+              </div>
+              <button
+                onClick={() => handleDelete(producto.id)}
+                style={{
+                  color: 'red',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontWeight: 'bold',
+                  alignSelf: 'flex-start'
+                }}
+              >
+                Borrar
+              </button>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
-  )
+  );
 }
