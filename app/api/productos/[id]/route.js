@@ -1,20 +1,22 @@
 import { NextResponse } from 'next/server';
-import { del } from '@vercel/blob'; // solo si guardas el blobUrl y quieres borrarlo también
+import { kv } from '@vercel/kv';
+import { del } from '@vercel/blob';
 
 export async function DELETE(request, { params }) {
   const { id } = params;
 
   try {
-    // 1. Aquí borras de tu base de datos/KV
-    // Si usas Vercel KV:
-    // await kv.del(`producto:${id}`);
+    // 1. Obtén el producto primero para sacar la URL de la imagen
+    const producto = await kv.get(`producto:${id}`);
 
-    // 2. Opcional: borra la imagen del Blob si guardaste la URL
-    // const producto = await kv.get(`producto:${id}`);
-    // if (producto?.imagen) {
-    // await del(producto.imagen);
-    // }
+    // 2. Borra la imagen del Blob si existe
+    if (producto?.imagen) {
+      await del(producto.imagen);
+    }
 
+    // 3. Borra el producto de KV
+    await kv.del(`producto:${id}`);
+    
     return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
