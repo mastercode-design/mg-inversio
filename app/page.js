@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { MessageCircle, Search, SlidersHorizontal, Star, X, Sparkles, TrendingUp, Crown, ShoppingBag, Filter, ChevronDown } from 'lucide-react'
+import { MessageCircle, Search, SlidersHorizontal, Star, X, Sparkles, TrendingUp, Crown, ShoppingBag, Filter, ChevronDown, Zap } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 const WPP1 = '3151101628'
@@ -16,19 +16,26 @@ export default function Tienda() {
   const [soloPremium, setSoloPremium] = useState(false)
   const [mostrarFiltros, setMostrarFiltros] = useState(false)
   const [cargando, setCargando] = useState(true)
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
 
-useEffect(() => {
-  fetch('/api/productos', { cache: 'no-store' }) // ← AGREGA ESTO
-    .then(r => r.json())
-    .then(data => {
-      setProductos(data);
-      setCargando(false);
-    })
-    .catch(() => {
-      toast.error("Error cargando productos");
-      setCargando(false);
-    });
-}, []);
+  useEffect(() => {
+    const handleMouseMove = (e) => setMousePos({ x: e.clientX, y: e.clientY })
+    window.addEventListener('mousemove', handleMouseMove)
+    return () => window.removeEventListener('mousemove', handleMouseMove)
+  }, [])
+
+  useEffect(() => {
+    fetch('/api/productos', { cache: 'no-store' })
+      .then(r => r.json())
+      .then(data => {
+        setProductos(data)
+        setCargando(false)
+      })
+      .catch(() => {
+        toast.error("Error cargando productos")
+        setCargando(false)
+      })
+  }, [])
 
   const categorias = [
     { nombre: 'Todos', icon: Sparkles },
@@ -77,12 +84,42 @@ useEffect(() => {
   const filtrosActivos = busqueda || filtroCat !== 'Todos' || ordenPrecio || soloPremium
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-zinc-950 to-black text-yellow-400">
-      {/* HEADER ANIMADO */}
+    <div className="min-h-screen bg-black text-white relative overflow-hidden">
+      {/* Partículas de fondo animadas */}
+      <div className="fixed inset-0 z-0">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(120,50,255,0.15),transparent_50%)]" />
+        <motion.div
+          className="absolute inset-0"
+          animate={{
+            background: [
+              'radial-gradient(circle at 20% 20%, rgba(0,255,255,0.1), transparent 40%)',
+              'radial-gradient(circle at 80% 80%, rgba(168,85,247,0.1), transparent 40%)',
+              'radial-gradient(circle at 20% 80%, rgba(0,255,255,0.1), transparent 40%)',
+              'radial-gradient(circle at 80% 20%, rgba(168,85,247,0.1), transparent 40%)',
+            ]
+          }}
+          transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+        />
+        
+        {/* Grid cyberpunk */}
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(0,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,255,255,0.03)_1px,transparent_1px)] bg-[size:60px_60px] [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_70%)]" />
+      </div>
+
+      {/* Cursor glow */}
+      <motion.div
+        className="fixed w-96 h-96 pointer-events-none z-0"
+        animate={{ x: mousePos.x - 192, y: mousePos.y - 192 }}
+        transition={{ type: "spring", damping: 25, stiffness: 150 }}
+      >
+        <div className="w-full h-full bg-gradient-to-r from-cyan-500/20 via-purple-500/20 to-pink-500/20 rounded-full blur-3xl" />
+      </motion.div>
+
+      {/* HEADER */}
       <motion.header 
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        className="glass sticky top-0 z-50 border-b border-yellow-600/20"
+        initial={{ y: -100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className="sticky top-0 z-50 backdrop-blur-2xl bg-white/5 border-b border-white/10"
       >
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex justify-between items-center mb-4">
@@ -92,8 +129,13 @@ useEffect(() => {
               transition={{ delay: 0.2 }}
               className="flex items-center gap-3"
             >
-              <Crown className="w-8 h-8 text-yellow-500" />
-              <h1 className="text-3xl md:text-5xl font-black gold-gradient">
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+              >
+                <Zap className="w-8 h-8 text-cyan-400" />
+              </motion.div>
+              <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
                 MG INVERSION
               </h1>
             </motion.div>
@@ -105,29 +147,29 @@ useEffect(() => {
               className="flex gap-2"
             >
               <motion.a 
-                whileHover={{ scale: 1.1, rotate: 5 }}
+                whileHover={{ scale: 1.1, boxShadow: "0 0 20px rgba(34,211,238,0.5)" }}
                 whileTap={{ scale: 0.95 }}
                 href={`https://wa.me/57${WPP1}`} 
                 target="_blank" 
-                className="glass p-3 rounded-xl hover:bg-green-500/10 transition"
+                className="backdrop-blur-xl bg-white/5 p-3 rounded-xl border border-white/10 hover:border-cyan-500/50 transition-all"
               >
-                <MessageCircle className="text-green-500 w-6 h-6" />
+                <MessageCircle className="text-cyan-400 w-6 h-6" />
               </motion.a>
               <motion.a 
-                whileHover={{ scale: 1.1, rotate: -5 }}
+                whileHover={{ scale: 1.1, boxShadow: "0 0 20px rgba(168,85,247,0.5)" }}
                 whileTap={{ scale: 0.95 }}
                 href={`https://instagram.com/${IG}`} 
                 target="_blank" 
-                className="glass p-3 rounded-xl hover:bg-pink-500/10 transition"
+                className="backdrop-blur-xl bg-white/5 p-3 rounded-xl border border-white/10 hover:border-purple-500/50 transition-all"
               >
-                <svg className="text-pink-500 w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                <svg className="text-purple-400 w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.979 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
                 </svg>
               </motion.a>
             </motion.div>
           </div>
 
-          {/* BUSCADOR PRO */}
+          {/* BUSCADOR */}
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -135,30 +177,30 @@ useEffect(() => {
             className="flex gap-3"
           >
             <div className="flex-1 relative group">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-yellow-600 w-5 h-5 group-focus-within:text-yellow-400 transition" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-cyan-500 w-5 h-5 group-focus-within:text-cyan-400 transition" />
               <input
                 type="text"
-                placeholder="Buscar bolsos, ropa premium..."
+                placeholder="Buscar productos..."
                 value={busqueda}
                 onChange={e => setBusqueda(e.target.value)}
-                className="w-full pl-12 pr-4 py-4 glass rounded-xl text-yellow-400 placeholder-yellow-700/50 focus:ring-2 focus:ring-yellow-500/50 focus:outline-none transition-all"
+                className="w-full pl-12 pr-4 py-4 backdrop-blur-xl bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 focus:outline-none transition-all"
               />
             </div>
             <motion.button
-              whileHover={{ scale: 1.05 }}
+              whileHover={{ scale: 1.05, boxShadow: "0 0 30px rgba(168,85,247,0.5)" }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setMostrarFiltros(!mostrarFiltros)}
-              className="btn-gold px-6 flex items-center gap-2 relative"
+              className="relative overflow-hidden backdrop-blur-xl bg-gradient-to-r from-purple-600 to-cyan-600 px-6 py-4 rounded-xl font-bold flex items-center gap-2"
             >
               <SlidersHorizontal size={20} />
               <span className="hidden md:inline">Filtros</span>
               <ChevronDown className={`w-4 h-4 transition-transform ${mostrarFiltros ? 'rotate-180' : ''}`} />
-              {filtrosActivos && <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full pulse-gold"></span>}
+              {filtrosActivos && <span className="absolute -top-1 -right-1 w-3 h-3 bg-pink-500 rounded-full animate-pulse"></span>}
             </motion.button>
           </motion.div>
         </div>
 
-        {/* FILTROS ANIMADOS */}
+        {/* FILTROS */}
         <AnimatePresence>
           {mostrarFiltros && (
             <motion.div
@@ -166,12 +208,12 @@ useEffect(() => {
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.3 }}
-              className="border-t border-yellow-600/20 bg-black/50 backdrop-blur-xl"
+              className="border-t border-white/10 bg-black/50 backdrop-blur-2xl"
             >
               <div className="max-w-7xl mx-auto px-4 py-6">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div>
-                    <p className="text-xs font-bold mb-3 text-yellow-500 uppercase tracking-wider flex items-center gap-2">
+                    <p className="text-xs font-bold mb-3 text-cyan-400 uppercase tracking-wider flex items-center gap-2">
                       <Filter size={14} /> CATEGORÍA
                     </p>
                     <div className="flex flex-wrap gap-2">
@@ -181,10 +223,10 @@ useEffect(() => {
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
                           onClick={() => setFiltroCat(cat.nombre)}
-                          className={`px-4 py-2 rounded-xl text-sm border-2 transition-all flex items-center gap-2 ${
+                          className={`px-4 py-2 rounded-xl text-sm border transition-all flex items-center gap-2 ${
                             filtroCat === cat.nombre 
-                              ? 'bg-gradient-to-r from-yellow-600 to-yellow-400 text-black border-yellow-500 shadow-lg shadow-yellow-500/30' 
-                              : 'glass border-yellow-600/30 hover:border-yellow-500'
+                              ? 'bg-gradient-to-r from-cyan-600 to-purple-600 border-transparent shadow-lg shadow-cyan-500/30' 
+                              : 'backdrop-blur-xl bg-white/5 border-white/10 hover:border-cyan-500/50'
                           }`}
                         >
                           <cat.icon size={16} />
@@ -195,52 +237,43 @@ useEffect(() => {
                   </div>
 
                   <div>
-                    <p className="text-xs font-bold mb-3 text-yellow-500 uppercase tracking-wider flex items-center gap-2">
+                    <p className="text-xs font-bold mb-3 text-cyan-400 uppercase tracking-wider flex items-center gap-2">
                       <TrendingUp size={14} /> PRECIO
                     </p>
                     <div className="flex gap-2">
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => setOrdenPrecio(ordenPrecio === 'barato' ? '' : 'barato')}
-                        className={`flex-1 px-4 py-2 rounded-xl border-2 transition-all ${
-                          ordenPrecio === 'barato' 
-                            ? 'bg-gradient-to-r from-yellow-600 to-yellow-400 text-black border-yellow-500 shadow-lg shadow-yellow-500/30' 
-                            : 'glass border-yellow-600/30 hover:border-yellow-500'
-                        }`}
-                      >
-                        Menor
-                      </motion.button>
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => setOrdenPrecio(ordenPrecio === 'caro' ? '' : 'caro')}
-                        className={`flex-1 px-4 py-2 rounded-xl border-2 transition-all ${
-                          ordenPrecio === 'caro' 
-                            ? 'bg-gradient-to-r from-yellow-600 to-yellow-400 text-black border-yellow-500 shadow-lg shadow-yellow-500/30' 
-                            : 'glass border-yellow-600/30 hover:border-yellow-500'
-                        }`}
-                      >
-                        Mayor
-                      </motion.button>
+                      {['barato', 'caro'].map(orden => (
+                        <motion.button
+                          key={orden}
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => setOrdenPrecio(ordenPrecio === orden ? '' : orden)}
+                          className={`flex-1 px-4 py-2 rounded-xl border transition-all ${
+                            ordenPrecio === orden 
+                              ? 'bg-gradient-to-r from-cyan-600 to-purple-600 border-transparent shadow-lg shadow-cyan-500/30' 
+                              : 'backdrop-blur-xl bg-white/5 border-white/10 hover:border-cyan-500/50'
+                          }`}
+                        >
+                          {orden === 'barato' ? 'Menor' : 'Mayor'}
+                        </motion.button>
+                      ))}
                     </div>
                   </div>
 
                   <div>
-                    <p className="text-xs font-bold mb-3 text-yellow-500 uppercase tracking-wider flex items-center gap-2">
+                    <p className="text-xs font-bold mb-3 text-cyan-400 uppercase tracking-wider flex items-center gap-2">
                       <Crown size={14} /> COLECCIÓN
                     </p>
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={() => setSoloPremium(!soloPremium)}
-                      className={`w-full px-4 py-2 rounded-xl border-2 flex items-center justify-center gap-2 transition-all ${
+                      className={`w-full px-4 py-2 rounded-xl border flex items-center justify-center gap-2 transition-all ${
                         soloPremium 
-                          ? 'bg-gradient-to-r from-yellow-600 to-yellow-400 text-black border-yellow-500 shadow-lg shadow-yellow-500/30' 
-                          : 'glass border-yellow-600/30 hover:border-yellow-500'
+                          ? 'bg-gradient-to-r from-cyan-600 to-purple-600 border-transparent shadow-lg shadow-cyan-500/30' 
+                          : 'backdrop-blur-xl bg-white/5 border-white/10 hover:border-cyan-500/50'
                       }`}
                     >
-                      <Star size={18} fill={soloPremium ? 'black' : 'none'} />
+                      <Star size={18} fill={soloPremium ? 'currentColor' : 'none'} />
                       Solo Premium
                     </motion.button>
                   </div>
@@ -251,9 +284,9 @@ useEffect(() => {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     onClick={limpiarFiltros}
-                    className="mt-4 text-sm text-red-400 hover:text-red-300 flex items-center gap-1 transition"
+                    className="mt-4 text-sm text-pink-400 hover:text-pink-300 flex items-center gap-1 transition"
                   >
-                    <X size={16} /> Limpiar todos los filtros
+                    <X size={16} /> Limpiar filtros
                   </motion.button>
                 )}
               </div>
@@ -262,46 +295,45 @@ useEffect(() => {
         </AnimatePresence>
       </motion.header>
 
-      {/* HERO ANIMADO */}
-      <section className="py-20 text-center px-4 relative overflow-hidden">
-        <div className="absolute inset-0 shimmer opacity-30"></div>
+      {/* HERO */}
+      <section className="py-24 text-center px-4 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5, duration: 0.8 }}
         >
           <motion.div
-            animate={{ rotate: [0, 5, -5, 0] }}
-            transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
-            className="inline-block mb-4"
+            animate={{ y: [0, -10, 0], rotate: [0, 5, -5, 0] }}
+            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+            className="inline-block mb-6"
           >
-            <Sparkles className="w-12 h-12 text-yellow-500 mx-auto" />
+            <Sparkles className="w-16 h-16 text-cyan-400 mx-auto" />
           </motion.div>
-          <h2 className="text-6xl md:text-8xl font-black gold-gradient mb-6">
-            Elegancia en Cada Detalle
+          <h2 className="text-6xl md:text-8xl font-black bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent mb-6">
+            Futuro en Tus Manos
           </h2>
-          <p className="text-yellow-600/80 text-xl md:text-2xl font-light">
-            Bolsos y Ropa Premium para Dama y Caballero
+          <p className="text-gray-400 text-xl md:text-2xl font-light max-w-3xl mx-auto">
+            Bolsos y Ropa Premium que definen la nueva era del lujo
           </p>
         </motion.div>
       </section>
 
       {/* CONTADOR */}
-      <div className="max-w-7xl mx-auto px-4 mb-8">
+      <div className="max-w-7xl mx-auto px-4 mb-8 relative z-10">
         <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="glass rounded-xl px-6 py-3 inline-flex items-center gap-3"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="backdrop-blur-xl bg-white/5 rounded-xl px-6 py-3 inline-flex items-center gap-3 border-white/10"
         >
-          <TrendingUp className="w-5 h-5 text-yellow-500" />
-          <p className="text-yellow-400 font-semibold">
-            {productosFiltrados.length} {productosFiltrados.length === 1 ? 'producto exclusivo' : 'productos exclusivos'}
+          <TrendingUp className="w-5 h-5 text-cyan-400" />
+          <p className="text-white font-semibold">
+            {productosFiltrados.length} productos exclusivos
           </p>
         </motion.div>
       </div>
 
       {/* PRODUCTOS */}
-      <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-20">
+      <div className="max-w-7xl mx-auto px-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-20 relative z-10">
         <AnimatePresence mode="popLayout">
           {cargando ? (
             [...Array(8)].map((_, i) => (
@@ -309,7 +341,7 @@ useEffect(() => {
                 key={i}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="glass rounded-2xl h-96 shimmer"
+                className="backdrop-blur-xl bg-white/5 rounded-2xl h-96 border-white/10 animate-pulse"
               />
             ))
           ) : (
@@ -317,48 +349,57 @@ useEffect(() => {
               <motion.div
                 key={p.id}
                 layout
-                initial={{ opacity: 0, y: 50 }}
-                animate={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0, y: 50, rotateX: -15 }}
+                animate={{ opacity: 1, y: 0, rotateX: 0 }}
                 exit={{ opacity: 0, scale: 0.9 }}
-                transition={{ duration: 0.4, delay: i * 0.05 }}
-                whileHover={{ y: -8 }}
-                className="glass rounded-2xl overflow-hidden card-hover group"
+                transition={{ duration: 0.5, delay: i * 0.08, type: "spring" }}
+                whileHover={{ y: -12, rotateX: 5 }}
+                className="group relative"
               >
-                <div className="relative overflow-hidden">
-                  <img 
-                    src={p.imagen} 
-                    alt={p.nombre} 
-                    className="w-full h-72 object-cover transition-transform duration-500 group-hover:scale-110" 
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  {p.premium && (
-                    <motion.div 
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      transition={{ delay: 0.2 + i * 0.05, type: "spring" }}
-                      className="absolute top-4 right-4 bg-gradient-to-r from-yellow-600 to-yellow-400 text-black px-4 py-2 rounded-full text-xs font-black flex items-center gap-1 shadow-lg"
+                {/* Glow effect */}
+                <div className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-purple-600 rounded-2xl blur-xl opacity-0 group-hover:opacity-40 transition-opacity duration-300" />
+                
+                <div className="relative backdrop-blur-2xl bg-white/5 rounded-2xl overflow-hidden border-white/10 group-hover:border-cyan-500/50 transition-all">
+                  <div className="relative overflow-hidden h-72">
+                    <img 
+                      src={p.imagen} 
+                      alt={p.nombre} 
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    {p.premium && (
+                      <motion.div 
+                        initial={{ scale: 0, rotate: -180 }}
+                        animate={{ scale: 1, rotate: 0 }}
+                        transition={{ delay: 0.2 + i * 0.05, type: "spring" }}
+                        className="absolute top-4 right-4 bg-gradient-to-r from-cyan-500 to-purple-500 px-4 py-2 rounded-full text-xs font-black flex items-center gap-1 shadow-lg shadow-purple-500/50"
+                      >
+                        <Crown size={14} fill="currentColor" /> PREMIUM
+                      </motion.div>
+                    )}
+                  </div>
+                  
+                  <div className="p-6">
+                    <p className="text-xs text-cyan-400/60 mb-2 uppercase tracking-wider">{p.categoria}</p>
+                    <h3 className="text-xl font-bold mb-3 group-hover:text-cyan-400 transition-colors line-clamp-2">
+                      {p.nombre}
+                    </h3>
+                    <p className="text-4xl font-black bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent mb-5">
+                      ${Number(p.precio).toLocaleString()}
+                    </p>
+                    <motion.button 
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => comprarWpp(p)} 
+                      className="w-full relative overflow-hidden group/btn"
                     >
-                      <Crown size={14} fill="black" /> PREMIUM
-                    </motion.div>
-                  )}
-                </div>
-                <div className="p-6">
-                  <p className="text-xs text-yellow-600/60 mb-2 uppercase tracking-wider">{p.categoria}</p>
-                  <h3 className="text-xl font-bold mb-3 group-hover:text-yellow-300 transition-colors line-clamp-2">
-                    {p.nombre}
-                  </h3>
-                  <p className="text-4xl font-black gold-gradient mb-5">
-                    ${Number(p.precio).toLocaleString()}
-                  </p>
-                  <motion.button 
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => comprarWpp(p)} 
-                    className="btn-gold w-full flex items-center justify-center gap-2"
-                  >
-                    <MessageCircle size={20} />
-                    Comprar Ahora
-                  </motion.button>
+                      <div className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-purple-600 transition-transform group-hover/btn:scale-110" />
+                      <span className="relative flex items-center justify-center gap-2 bg-black/80 py-3 rounded-xl font-bold backdrop-blur-sm group-hover/btn:bg-transparent transition-all">
+                        <MessageCircle size={20} />
+                        Comprar Ahora
+                      </span>
+                    </motion.button>
+                  </div>
                 </div>
               </motion.div>
             ))
@@ -370,49 +411,41 @@ useEffect(() => {
         <motion.div 
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="text-center py-20"
+          className="text-center py-20 relative z-10"
         >
-          <Sparkles className="w-16 h-16 text-yellow-600/30 mx-auto mb-4" />
-          <p className="text-yellow-600 text-2xl mb-6">No se encontraron productos</p>
-          <button onClick={limpiarFiltros} className="btn-gold">Ver todos los productos</button>
+          <Sparkles className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+          <p className="text-gray-400 text-2xl mb-6">No se encontraron productos</p>
+          <button onClick={limpiarFiltros} className="px-6 py-3 bg-gradient-to-r from-cyan-600 to-purple-600 rounded-xl font-bold">
+            Ver todos los productos
+          </button>
         </motion.div>
       )}
 
-      {/* FOOTER PRO */}
-      <footer className="glass border-t border-yellow-600/20 py-12 text-center mt-20">
+      {/* FOOTER */}
+      <footer className="backdrop-blur-2xl bg-white/5 border-t border-white/10 py-12 text-center mt-20 relative z-10">
         <motion.div
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
         >
-          <p className="mb-6 text-yellow-500 font-black text-xl tracking-wider">CONTÁCTANOS</p>
+          <p className="mb-6 text-cyan-400 font-black text-xl tracking-wider">CONTÁCTANOS</p>
           <div className="flex gap-8 justify-center flex-wrap mb-8">
             <motion.a 
               whileHover={{ scale: 1.1, y: -2 }}
               href={`https://wa.me/57${WPP1}`} 
-              className="flex items-center gap-2 hover:text-green-400 transition text-yellow-400"
+              className="flex items-center gap-2 hover:text-cyan-400 transition text-gray-400"
             >
               <MessageCircle size={20} /> 315 110 1628
             </motion.a>
             <motion.a 
               whileHover={{ scale: 1.1, y: -2 }}
               href={`https://wa.me/57${WPP2}`} 
-              className="flex items-center gap-2 hover:text-green-400 transition text-yellow-400"
+              className="flex items-center gap-2 hover:text-cyan-400 transition text-gray-400"
             >
               <MessageCircle size={20} /> 317 481 1805
             </motion.a>
-            <motion.a 
-              whileHover={{ scale: 1.1, y: -2 }}
-              href={`https://instagram.com/${IG}`} 
-              className="flex items-center gap-2 hover:text-pink-400 transition text-yellow-400"
-            >
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.979 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
-              </svg>
-              @{IG}
-            </motion.a>
           </div>
-          <p className="text-yellow-700/50 text-sm">© 2026 MG INVERSION - Todos los derechos reservados</p>
+          <p className="text-gray-600 text-sm">©️ 2026 MG INVERSION - Todos los derechos reservados</p>
         </motion.div>
       </footer>
     </div>

@@ -1,7 +1,7 @@
 import { put } from '@vercel/blob'
 import { NextResponse } from 'next/server'
 
-export const runtime = 'nodejs' // ← Esto es clave
+export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 export async function POST(request) {
@@ -15,7 +15,7 @@ export async function POST(request) {
 
     const blob = await put(filename, request.body, {
       access: 'public',
-      token: process.env.BLOB_READ_WRITE_TOKEN // ← Forzamos el token
+      addRandomSuffix: true // ← Esto arregla el error
     })
 
     return NextResponse.json(blob)
