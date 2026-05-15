@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Package, Plus, Trash2, Zap, AlertCircle, CheckCircle2, Upload } from 'lucide-react';
+import { Package, Plus, Trash2, Zap, Upload } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function AdminPage() {
