@@ -1,20 +1,39 @@
-import { NextResponse } from 'next/server'
 import { kv } from '@vercel/kv'
-import { del } from '@vercel/blob'
-
-export const dynamic = 'force-dynamic'
+import { revalidatePath } from 'next/cache'
 
 export async function DELETE(request, { params }) {
-  const { id } = params
+  const { id } = await params
 
   try {
     const producto = await kv.get(`producto:${id}`)
-    if (producto?.imagen) {
-      await del(producto.imagen).catch(() => {})
+
+    if (!producto) {
+      return Response.json({ error: 'Producto no encontrado' }, { status: 404 })
     }
+
     await kv.del(`producto:${id}`)
-    return NextResponse.json({ success: true })
+
+    // Invalida cache para que desaparezca al instante
+    revalidatePath('/api/productos')
+    revalidatePath('/')
+
+    return Response.json({ ok: true })
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    console.error('DELETE ERROR:', error)
+    return Response.json({ error: 'Error eliminando producto' }, { status: 500 })
+  }
+}
+
+export async function GET(request, { params }) {
+  const { id } = await params
+
+  try {
+    const producto = await kv.get(`producto:${id}`)
+    if (!producto) {
+      return Response.json({ error: 'Producto no encontrado' }, { status: 404 })
+    }
+    return Response.json(producto)
+  } catch (error) {
+    return Response.json({ error: 'Error obteniendo producto' }, { status: 500 })
   }
 }

@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { MessageCircle, Search, SlidersHorizontal, Star, X, Sparkles, TrendingUp, Crown, ShoppingBag, Filter, ChevronDown, Zap, ChevronLeft, ChevronRight, ZoomIn } from 'lucide-react'
+import { MessageCircle, Search, SlidersHorizontal, Star, X, Sparkles, Crown, ShoppingBag, Filter, Zap, ChevronLeft, ChevronRight, ZoomIn, Package } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 const WPP1 = '3151101628'
@@ -19,6 +19,7 @@ export default function Tienda() {
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
   const [showGreeting, setShowGreeting] = useState(true)
   const [modalImagen, setModalImagen] = useState(null)
+  const [productoModal, setProductoModal] = useState(null)
   const [indiceImagen, setIndiceImagen] = useState({})
 
   useEffect(() => {
@@ -50,7 +51,8 @@ export default function Tienda() {
     { nombre: 'Bolsos Dama', icon: ShoppingBag },
     { nombre: 'Bolsos Caballero', icon: ShoppingBag },
     { nombre: 'Ropa Dama', icon: Crown },
-    { nombre: 'Ropa Caballero', icon: Crown }
+    { nombre: 'Ropa Caballero', icon: Crown },
+    { nombre: 'Accesorios', icon: Package }
   ]
 
   const productosFiltrados = useMemo(() => {
@@ -99,6 +101,24 @@ export default function Tienda() {
     })
   }
 
+  const abrirModal = (prod, idx) => {
+    const imagenes = prod.imagenes && prod.imagenes.length > 0? prod.imagenes : [prod.imagen]
+    setProductoModal({...prod, imagenes })
+    setModalImagen(imagenes[idx])
+    setIndiceImagen(prev => ({...prev, [prod.id]: idx }))
+  }
+
+  const cambiarModalImagen = (dir) => {
+    if (!productoModal) return
+    const imagenes = productoModal.imagenes
+    const actual = indiceImagen[productoModal.id] || 0
+    let nuevo = actual + dir
+    if (nuevo < 0) nuevo = imagenes.length - 1
+    if (nuevo >= imagenes.length) nuevo = 0
+    setIndiceImagen(prev => ({...prev, [productoModal.id]: nuevo }))
+    setModalImagen(imagenes[nuevo])
+  }
+
   const filtrosActivos = busqueda || filtroCat!== 'Todos' || ordenPrecio || soloPremium
 
   return (
@@ -106,12 +126,12 @@ export default function Tienda() {
 
       {/* Modal imagen grande */}
       <AnimatePresence>
-        {modalImagen && (
+        {modalImagen && productoModal && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={() => setModalImagen(null)}
+            onClick={() => { setModalImagen(null); setProductoModal(null) }}
             className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4"
           >
             <motion.img
@@ -123,8 +143,28 @@ export default function Tienda() {
               className="max-w-full max-h-full object-contain rounded-2xl"
               onClick={(e) => e.stopPropagation()}
             />
+
+            {/* Flechas en modal */}
+            {productoModal.imagenes.length > 1 && (
+              <>
+                <button
+                  onClick={(e) => { e.stopPropagation(); cambiarModalImagen(-1) }}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/60 backdrop-blur-xl p-3 rounded-full border-cyan-400/50"
+                >
+                  <ChevronLeft size={28} className="text-cyan-400" />
+                </button>
+
+                <button
+                  onClick={(e) => { e.stopPropagation(); cambiarModalImagen(1) }}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/60 backdrop-blur-xl p-3 rounded-full border-purple-400/50"
+                >
+                  <ChevronRight size={28} className="text-purple-400" />
+                </button>
+              </>
+            )}
+
             <button
-              onClick={() => setModalImagen(null)}
+              onClick={() => { setModalImagen(null); setProductoModal(null) }}
               className="absolute top-4 right-4 bg-white/10 backdrop-blur-xl p-3 rounded-full hover:bg-white/20 transition"
             >
               <X size={24} />
@@ -133,7 +173,7 @@ export default function Tienda() {
         )}
       </AnimatePresence>
 
-      {/* Animación de entrada con saludo */}
+      {/* Saludo animado */}
       <AnimatePresence>
         {showGreeting && (
           <motion.div
@@ -173,12 +213,7 @@ export default function Tienda() {
                 </div>
               </motion.div>
 
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="text-center"
-              >
+              <div className="text-center">
                 <h3 className="text-2xl font-black bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent mb-2">
                   Hola, somos M y G
                 </h3>
@@ -193,13 +228,13 @@ export default function Tienda() {
                 >
                   Ver Productos
                 </motion.button>
-              </motion.div>
+              </div>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Fondo animado futurista */}
+      {/* Fondo animado */}
       <div className="fixed inset-0 z-0">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(120,50,255,0.15),transparent_50%)]" />
         <motion.div
@@ -208,17 +243,15 @@ export default function Tienda() {
             background: [
               'radial-gradient(circle at 20% 20%, rgba(0,255,255,0.1), transparent 40%)',
               'radial-gradient(circle at 80% 80%, rgba(168,85,247,0.1), transparent 40%)',
-              'radial-gradient(circle at 20% 80%, rgba(0,255,255,0.1), transparent 40%)',
             ]
           }}
           transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
         />
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(0,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,255,255,0.03)_1px,transparent_1px)] bg-[size:60px_60px] [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_70%)]" />
       </div>
 
       {/* Cursor glow */}
       <motion.div
-        className="fixed w-96 h-96 pointer-events-none z-0"
+        className="fixed w-96 h-96 pointer-events-none z-0 hidden md:block"
         animate={{ x: mousePos.x - 192, y: mousePos.y - 192 }}
         transition={{ type: "spring", damping: 25, stiffness: 150 }}
       >
@@ -229,15 +262,12 @@ export default function Tienda() {
       <motion.header
         initial={{ y: -100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.6 }}
         className="sticky top-0 z-50 backdrop-blur-2xl bg-white/5 border-b border-white/10"
       >
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex justify-between items-center mb-4">
             <div className="flex items-center gap-3">
-              <motion.div animate={{ rotate: 360 }} transition={{ duration: 20, repeat: Infinity, ease: "linear" }}>
-                <Zap className="w-8 h-8 text-cyan-400" />
-              </motion.div>
+              <Zap className="w-8 h-8 text-cyan-400" />
               <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
                 MG INVERSION
               </h1>
@@ -245,7 +275,7 @@ export default function Tienda() {
 
             <div className="flex gap-2">
               <motion.a
-                whileHover={{ scale: 1.1, boxShadow: "0 0 20px rgba(34,211,238,0.5)" }}
+                whileHover={{ scale: 1.1 }}
                 href={`https://wa.me/57${WPP1}`}
                 target="_blank"
                 className="backdrop-blur-xl bg-white/5 p-3 rounded-xl border-white/10 hover:border-cyan-500/50 transition-all"
@@ -253,7 +283,7 @@ export default function Tienda() {
                 <MessageCircle className="text-cyan-400 w-6 h-6" />
               </motion.a>
               <motion.a
-                whileHover={{ scale: 1.1, boxShadow: "0 0 20px rgba(168,85,247,0.5)" }}
+                whileHover={{ scale: 1.1 }}
                 href={`https://instagram.com/${IG}`}
                 target="_blank"
                 className="backdrop-blur-xl bg-white/5 p-3 rounded-xl border-white/10 hover:border-purple-500/50 transition-all"
@@ -267,21 +297,20 @@ export default function Tienda() {
 
           {/* BUSCADOR */}
           <div className="flex gap-3">
-            <div className="flex-1 relative group">
+            <div className="flex-1 relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-cyan-500 w-5 h-5" />
               <input
                 type="text"
                 placeholder="Buscar productos..."
                 value={busqueda}
                 onChange={e => setBusqueda(e.target.value)}
-                className="w-full pl-12 pr-4 py-4 backdrop-blur-xl bg-white/5 border-white/10 rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:outline-none transition-all"
+                className="w-full pl-12 pr-4 py-4 backdrop-blur-xl bg-white/5 border-white/10 rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:outline-none"
               />
             </div>
             <motion.button
-              whileHover={{ scale: 1.05, boxShadow: "0 0 30px rgba(168,85,247,0.5)" }}
-              whileTap={{ scale: 0.95 }}
+              whileHover={{ scale: 1.05 }}
               onClick={() => setMostrarFiltros(!mostrarFiltros)}
-              className="relative overflow-hidden backdrop-blur-xl bg-gradient-to-r from-purple-600 to-cyan-600 px-6 py-4 rounded-xl font-bold flex items-center gap-2"
+              className="relative backdrop-blur-xl bg-gradient-to-r from-purple-600 to-cyan-600 px-6 py-4 rounded-xl font-bold flex items-center gap-2"
             >
               <SlidersHorizontal size={20} />
               <span className="hidden md:inline">Filtros</span>
@@ -315,7 +344,7 @@ export default function Tienda() {
                           className={`px-4 py-2 rounded-xl text-sm border transition-all flex items-center gap-2 ${
                             filtroCat === cat.nombre
                            ? 'bg-gradient-to-r from-cyan-600 to-purple-600 border-transparent shadow-lg shadow-cyan-500/30'
-                              : 'backdrop-blur-xl bg-white/5 border-white/10 hover:border-cyan-500/50'
+                            : 'backdrop-blur-xl bg-white/5 border-white/10 hover:border-cyan-500/50'
                           }`}
                         >
                           <cat.icon size={16} />
@@ -326,20 +355,17 @@ export default function Tienda() {
                   </div>
 
                   <div>
-                    <p className="text-xs font-bold mb-3 text-cyan-400 uppercase tracking-wider flex items-center gap-2">
-                      <TrendingUp size={14} /> PRECIO
-                    </p>
+                    <p className="text-xs font-bold mb-3 text-cyan-400 uppercase tracking-wider">PRECIO</p>
                     <div className="flex gap-2">
                       {['barato', 'caro'].map(orden => (
                         <motion.button
                           key={orden}
                           whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
                           onClick={() => setOrdenPrecio(ordenPrecio === orden? '' : orden)}
                           className={`flex-1 px-4 py-2 rounded-xl border transition-all ${
                             ordenPrecio === orden
-                           ? 'bg-gradient-to-r from-cyan-600 to-purple-600 border-transparent shadow-lg shadow-cyan-500/30'
-                              : 'backdrop-blur-xl bg-white/5 border-white/10 hover:border-cyan-500/50'
+                           ? 'bg-gradient-to-r from-cyan-600 to-purple-600 border-transparent'
+                            : 'backdrop-blur-xl bg-white/5 border-white/10'
                           }`}
                         >
                           {orden === 'barato'? 'Menor' : 'Mayor'}
@@ -349,17 +375,14 @@ export default function Tienda() {
                   </div>
 
                   <div>
-                    <p className="text-xs font-bold mb-3 text-cyan-400 uppercase tracking-wider flex items-center gap-2">
-                      <Crown size={14} /> COLECCIÓN
-                    </p>
+                    <p className="text-xs font-bold mb-3 text-cyan-400 uppercase tracking-wider">COLECCIÓN</p>
                     <motion.button
                       whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
                       onClick={() => setSoloPremium(!soloPremium)}
                       className={`w-full px-4 py-2 rounded-xl border flex items-center justify-center gap-2 transition-all ${
                         soloPremium
-                       ? 'bg-gradient-to-r from-cyan-600 to-purple-600 border-transparent shadow-lg shadow-cyan-500/30'
-                          : 'backdrop-blur-xl bg-white/5 border-white/10 hover:border-cyan-500/50'
+                       ? 'bg-gradient-to-r from-cyan-600 to-purple-600 border-transparent'
+                        : 'backdrop-blur-xl bg-white/5 border-white/10'
                       }`}
                     >
                       <Star size={18} fill={soloPremium? 'currentColor' : 'none'} />
@@ -370,8 +393,6 @@ export default function Tienda() {
 
                 {filtrosActivos && (
                   <motion.button
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
                     onClick={limpiarFiltros}
                     className="mt-4 text-sm text-pink-400 hover:text-pink-300 flex items-center gap-1 transition"
                   >
@@ -393,7 +414,7 @@ export default function Tienda() {
         >
           <motion.div
             animate={{ y: [0, -10, 0], rotate: [0, 5, -5, 0] }}
-            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+            transition={{ duration: 4, repeat: Infinity }}
             className="inline-block mb-6"
           >
             <Sparkles className="w-16 h-16 text-cyan-400 mx-auto" />
@@ -402,24 +423,10 @@ export default function Tienda() {
             Futuro en Tus Manos
           </h2>
           <p className="text-gray-400 text-xl md:text-2xl font-light max-w-3xl mx-auto">
-            Bolsos y Ropa Premium que definen la nueva era del lujo
+            Bolsos, Ropa y Accesorios Premium
           </p>
         </motion.div>
       </section>
-
-      {/* CONTADOR */}
-      <div className="max-w-7xl mx-auto px-4 mb-8 relative z-10">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="backdrop-blur-xl bg-white/5 rounded-xl px-6 py-3 inline-flex items-center gap-3 border-white/10"
-        >
-          <TrendingUp className="w-5 h-5 text-cyan-400" />
-          <p className="text-white font-semibold">
-            {productosFiltrados.length} productos exclusivos
-          </p>
-        </motion.div>
-      </div>
 
       {/* PRODUCTOS */}
       <div className="max-w-7xl mx-auto px-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-20 relative z-10">
@@ -430,7 +437,7 @@ export default function Tienda() {
             ))
           ) : (
             productosFiltrados.map((p, i) => {
-              const imagenes = p.imagenes || [p.imagen]
+              const imagenes = p.imagenes && p.imagenes.length > 0? p.imagenes : [p.imagen]
               const idxActual = indiceImagen[p.id] || 0
 
               return (
@@ -446,42 +453,65 @@ export default function Tienda() {
                   <div className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-purple-600 rounded-2xl blur-xl opacity-0 group-hover:opacity-40 transition-opacity duration-300" />
 
                   <div className="relative backdrop-blur-2xl bg-white/5 rounded-2xl overflow-hidden border-white/10 group-hover:border-cyan-500/50 transition-all">
+
+                    {/* Imagen con galería */}
                     <div className="relative overflow-hidden h-72">
                       <img
                         src={imagenes[idxActual]}
                         alt={p.nombre}
                         className="w-full h-full object-cover cursor-pointer transition-transform duration-700 group-hover:scale-110"
-                        onClick={() => setModalImagen(imagenes[idxActual])}
+                        onClick={() => abrirModal(p, idxActual)}
                       />
 
                       <button
-                        onClick={() => setModalImagen(imagenes[idxActual])}
-                        className="absolute top-3 right-3 bg-black/50 backdrop-blur-xl p-2 rounded-full opacity-0 group-hover:opacity-100 transition"
+                        onClick={() => abrirModal(p, idxActual)}
+                        className="absolute top-3 right-3 bg-black/50 backdrop-blur-xl p-2 rounded-full opacity-0 group-hover:opacity-100 transition z-10"
                       >
                         <ZoomIn size={18} />
                       </button>
 
+                      {/* Flechas - Siempre visibles en móvil */}
                       {imagenes.length > 1 && (
                         <>
-                          <button
-                            onClick={() => cambiarImagen(p.id, -1, imagenes.length)}
-                            className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 backdrop-blur-xl p-2 rounded-full opacity-0 group-hover:opacity-100 transition"
+                          <motion.button
+                            whileTap={{ scale: 0.9 }}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              cambiarImagen(p.id, -1, imagenes.length)
+                            }}
+                            className="absolute left-3 top-1/2 -translate-y-1/2 z-10"
                           >
-                            <ChevronLeft size={20} />
-                          </button>
-                          <button
-                            onClick={() => cambiarImagen(p.id, 1, imagenes.length)}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 backdrop-blur-xl p-2 rounded-full opacity-0 group-hover:opacity-100 transition"
+                            <div className="absolute inset-0 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-full blur-md opacity-80" />
+                            <div className="relative bg-black/70 backdrop-blur-xl p-3 rounded-full border-cyan-400/50">
+                              <ChevronLeft size={22} className="text-cyan-400" />
+                            </div>
+                          </motion.button>
+
+                          <motion.button
+                            whileTap={{ scale: 0.9 }}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              cambiarImagen(p.id, 1, imagenes.length)
+                            }}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 z-10"
                           >
-                            <ChevronRight size={20} />
-                          </button>
-                          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2">
+                            <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full blur-md opacity-80" />
+                            <div className="relative bg-black/70 backdrop-blur-xl p-3 rounded-full border-purple-400/50">
+                              <ChevronRight size={22} className="text-purple-400" />
+                            </div>
+                          </motion.button>
+
+                          {/* Indicadores */}
+                          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2 z-10">
                             {imagenes.map((_, idx) => (
-                              <div
+                              <motion.div
                                 key={idx}
-                                className={`w-2 h-2 rounded-full transition-all ${
-                                  idx === idxActual? 'bg-cyan-400 w-6' : 'bg-white/40'
-                                }`}
+                                animate={{
+                                  width: idx === idxActual? 24 : 8,
+                                  backgroundColor: idx === idxActual? '#06b6d4' : 'rgba(255,255,255,0.4)'
+                                }}
+                                transition={{ duration: 0.3 }}
+                                className="h-2 rounded-full"
                               />
                             ))}
                           </div>
@@ -489,22 +519,16 @@ export default function Tienda() {
                       )}
 
                       {p.premium && (
-                        <motion.div
-                          initial={{ scale: 0, rotate: -180 }}
-                          animate={{ scale: 1, rotate: 0 }}
-                          transition={{ delay: 0.2 + i * 0.05, type: "spring" }}
-                          className="absolute top-4 left-4 bg-gradient-to-r from-cyan-500 to-purple-500 px-4 py-2 rounded-full text-xs font-black flex items-center gap-1 shadow-lg shadow-purple-500/50"
-                        >
+                        <div className="absolute top-4 left-4 bg-gradient-to-r from-cyan-500 to-purple-500 px-4 py-2 rounded-full text-xs font-black flex items-center gap-1">
                           <Crown size={14} fill="currentColor" /> PREMIUM
-                        </motion.div>
+                        </div>
                       )}
                     </div>
 
+                    {/* Info del producto */}
                     <div className="p-6">
                       <p className="text-xs text-cyan-400/60 mb-2 uppercase tracking-wider">{p.categoria}</p>
-                      <h3 className="text-xl font-bold mb-3 group-hover:text-cyan-400 transition-colors line-clamp-2">
-                        {p.nombre}
-                      </h3>
+                      <h3 className="text-xl font-bold mb-3 line-clamp-2">{p.nombre}</h3>
                       <p className="text-4xl font-black bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent mb-5">
                         ${Number(p.precio).toLocaleString()}
                       </p>
@@ -512,10 +536,10 @@ export default function Tienda() {
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                         onClick={() => comprarWpp(p)}
-                        className="w-full relative overflow-hidden group/btn"
+                        className="w-full relative overflow-hidden"
                       >
-                        <div className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-purple-600 transition-transform group-hover/btn:scale-110" />
-                        <span className="relative flex items-center justify-center gap-2 bg-black/80 py-3 rounded-xl font-bold backdrop-blur-sm group-hover/btn:bg-transparent transition-all">
+                        <div className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-purple-600" />
+                        <span className="relative flex items-center justify-center gap-2 bg-black/80 py-3 rounded-xl font-bold backdrop-blur-sm hover:bg-transparent transition-all">
                           <MessageCircle size={20} />
                           Comprar Ahora
                         </span>

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { kv } from '@vercel/kv'
+import { revalidatePath } from 'next/cache'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -7,7 +8,7 @@ export const revalidate = 0
 export async function GET() {
   try {
     const keys = await kv.keys('producto:*')
-    
+
     if (!keys || keys.length === 0) {
       return NextResponse.json([])
     }
@@ -16,9 +17,7 @@ export async function GET() {
     const productosValidos = productos.filter(Boolean)
     productosValidos.sort((a, b) => b.id.localeCompare(a.id))
 
-    return NextResponse.json(productosValidos, {
-      headers: { 'Cache-Control': 'no-store, max-age=0' }
-    })
+    return NextResponse.json(productosValidos)
   } catch (error) {
     console.error('GET ERROR:', error)
     return NextResponse.json([], { status: 200 })
@@ -36,10 +35,17 @@ export async function POST(request) {
       precio: Number(body.precio),
       categoria: body.categoria,
       imagen: body.imagen,
+      imagenes: body.imagenes,
+      premium: body.premium || false,
       creado: new Date().toISOString()
     }
 
     await kv.set(`producto:${id}`, producto)
+
+    // Invalida cache para que aparezca al instante
+    revalidatePath('/api/productos')
+    revalidatePath('/')
+
     return NextResponse.json(producto)
   } catch (error) {
     console.error('POST ERROR:', error)
