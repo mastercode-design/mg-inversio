@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { MessageCircle, Search, SlidersHorizontal, Star, X, Sparkles, TrendingUp, Crown, ShoppingBag, Filter, ChevronDown, Zap } from 'lucide-react'
+import { MessageCircle, Search, SlidersHorizontal, Star, X, Sparkles, TrendingUp, Crown, ShoppingBag, Filter, ChevronDown, Zap, ChevronLeft, ChevronRight, ZoomIn } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 const WPP1 = '3151101628'
@@ -18,6 +18,8 @@ export default function Tienda() {
   const [cargando, setCargando] = useState(true)
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
   const [showGreeting, setShowGreeting] = useState(true)
+  const [modalImagen, setModalImagen] = useState(null)
+  const [indiceImagen, setIndiceImagen] = useState({})
 
   useEffect(() => {
     const handleMouseMove = (e) => setMousePos({ x: e.clientX, y: e.clientY })
@@ -26,20 +28,18 @@ export default function Tienda() {
   }, [])
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowGreeting(false)
-    }, 60000)
+    const timer = setTimeout(() => setShowGreeting(false), 60000)
     return () => clearTimeout(timer)
   }, [])
 
   useEffect(() => {
     fetch('/api/productos', { cache: 'no-store' })
-    .then(r => r.json())
-    .then(data => {
+   .then(r => r.json())
+   .then(data => {
         setProductos(data)
         setCargando(false)
       })
-    .catch(() => {
+   .catch(() => {
         toast.error("Error cargando productos")
         setCargando(false)
       })
@@ -89,12 +89,51 @@ export default function Tienda() {
     toast.success('Filtros limpiados')
   }
 
+  const cambiarImagen = (prodId, dir, total) => {
+    setIndiceImagen(prev => {
+      const actual = prev[prodId] || 0
+      let nuevo = actual + dir
+      if (nuevo < 0) nuevo = total - 1
+      if (nuevo >= total) nuevo = 0
+      return {...prev, [prodId]: nuevo }
+    })
+  }
+
   const filtrosActivos = busqueda || filtroCat!== 'Todos' || ordenPrecio || soloPremium
 
   return (
     <div className="min-h-screen bg-black text-white relative overflow-hidden">
 
-      {/* Muñequito saludando */}
+      {/* Modal imagen grande */}
+      <AnimatePresence>
+        {modalImagen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setModalImagen(null)}
+            className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4"
+          >
+            <motion.img
+              initial={{ scale: 0.8 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.8 }}
+              src={modalImagen}
+              alt="Producto"
+              className="max-w-full max-h-full object-contain rounded-2xl"
+              onClick={(e) => e.stopPropagation()}
+            />
+            <button
+              onClick={() => setModalImagen(null)}
+              className="absolute top-4 right-4 bg-white/10 backdrop-blur-xl p-3 rounded-full hover:bg-white/20 transition"
+            >
+              <X size={24} />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Animación de entrada con saludo */}
       <AnimatePresence>
         {showGreeting && (
           <motion.div
@@ -143,12 +182,8 @@ export default function Tienda() {
                 <h3 className="text-2xl font-black bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent mb-2">
                   Hola, somos M y G
                 </h3>
-                <p className="text-gray-300 mb-2">
-                  Bienvenido a nuestra tienda
-                </p>
-                <p className="text-lg font-semibold text-cyan-400">
-                  y al futuro de la elegancia ✨
-                </p>
+                <p className="text-gray-300 mb-2">Bienvenido a nuestra tienda</p>
+                <p className="text-lg font-semibold text-cyan-400">y al futuro de la elegancia ✨</p>
 
                 <motion.button
                   whileHover={{ scale: 1.05 }}
@@ -164,7 +199,7 @@ export default function Tienda() {
         )}
       </AnimatePresence>
 
-      {/* Fondo animado */}
+      {/* Fondo animado futurista */}
       <div className="fixed inset-0 z-0">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(120,50,255,0.15),transparent_50%)]" />
         <motion.div
@@ -174,7 +209,6 @@ export default function Tienda() {
               'radial-gradient(circle at 20% 20%, rgba(0,255,255,0.1), transparent 40%)',
               'radial-gradient(circle at 80% 80%, rgba(168,85,247,0.1), transparent 40%)',
               'radial-gradient(circle at 20% 80%, rgba(0,255,255,0.1), transparent 40%)',
-              'radial-gradient(circle at 80% 20%, rgba(168,85,247,0.1), transparent 40%)',
             ]
           }}
           transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
@@ -195,34 +229,23 @@ export default function Tienda() {
       <motion.header
         initial={{ y: -100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
+        transition={{ duration: 0.6 }}
         className="sticky top-0 z-50 backdrop-blur-2xl bg-white/5 border-b border-white/10"
       >
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex justify-between items-center mb-4">
-            <motion.div
-              initial={{ opacity: 0, x: -50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2 }}
-              className="flex items-center gap-3"
-            >
+            <div className="flex items-center gap-3">
               <motion.div animate={{ rotate: 360 }} transition={{ duration: 20, repeat: Infinity, ease: "linear" }}>
                 <Zap className="w-8 h-8 text-cyan-400" />
               </motion.div>
               <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
                 MG INVERSION
               </h1>
-            </motion.div>
+            </div>
 
-            <motion.div
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3 }}
-              className="flex gap-2"
-            >
+            <div className="flex gap-2">
               <motion.a
                 whileHover={{ scale: 1.1, boxShadow: "0 0 20px rgba(34,211,238,0.5)" }}
-                whileTap={{ scale: 0.95 }}
                 href={`https://wa.me/57${WPP1}`}
                 target="_blank"
                 className="backdrop-blur-xl bg-white/5 p-3 rounded-xl border-white/10 hover:border-cyan-500/50 transition-all"
@@ -231,7 +254,6 @@ export default function Tienda() {
               </motion.a>
               <motion.a
                 whileHover={{ scale: 1.1, boxShadow: "0 0 20px rgba(168,85,247,0.5)" }}
-                whileTap={{ scale: 0.95 }}
                 href={`https://instagram.com/${IG}`}
                 target="_blank"
                 className="backdrop-blur-xl bg-white/5 p-3 rounded-xl border-white/10 hover:border-purple-500/50 transition-all"
@@ -240,24 +262,19 @@ export default function Tienda() {
                   <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.979 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
                 </svg>
               </motion.a>
-            </motion.div>
+            </div>
           </div>
 
           {/* BUSCADOR */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="flex gap-3"
-          >
+          <div className="flex gap-3">
             <div className="flex-1 relative group">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-cyan-500 w-5 h-5 group-focus-within:text-cyan-400 transition" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-cyan-500 w-5 h-5" />
               <input
                 type="text"
                 placeholder="Buscar productos..."
                 value={busqueda}
                 onChange={e => setBusqueda(e.target.value)}
-                className="w-full pl-12 pr-4 py-4 backdrop-blur-xl bg-white/5 border-white/10 rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 focus:outline-none transition-all"
+                className="w-full pl-12 pr-4 py-4 backdrop-blur-xl bg-white/5 border-white/10 rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:outline-none transition-all"
               />
             </div>
             <motion.button
@@ -268,10 +285,9 @@ export default function Tienda() {
             >
               <SlidersHorizontal size={20} />
               <span className="hidden md:inline">Filtros</span>
-              <ChevronDown className={`w-4 h-4 transition-transform ${mostrarFiltros? 'rotate-180' : ''}`} />
               {filtrosActivos && <span className="absolute -top-1 -right-1 w-3 h-3 bg-pink-500 rounded-full animate-pulse"></span>}
             </motion.button>
-          </motion.div>
+          </div>
         </div>
 
         {/* FILTROS */}
@@ -281,7 +297,6 @@ export default function Tienda() {
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.3 }}
               className="border-t border-white/10 bg-black/50 backdrop-blur-2xl"
             >
               <div className="max-w-7xl mx-auto px-4 py-6">
@@ -299,7 +314,7 @@ export default function Tienda() {
                           onClick={() => setFiltroCat(cat.nombre)}
                           className={`px-4 py-2 rounded-xl text-sm border transition-all flex items-center gap-2 ${
                             filtroCat === cat.nombre
-                            ? 'bg-gradient-to-r from-cyan-600 to-purple-600 border-transparent shadow-lg shadow-cyan-500/30'
+                           ? 'bg-gradient-to-r from-cyan-600 to-purple-600 border-transparent shadow-lg shadow-cyan-500/30'
                               : 'backdrop-blur-xl bg-white/5 border-white/10 hover:border-cyan-500/50'
                           }`}
                         >
@@ -323,7 +338,7 @@ export default function Tienda() {
                           onClick={() => setOrdenPrecio(ordenPrecio === orden? '' : orden)}
                           className={`flex-1 px-4 py-2 rounded-xl border transition-all ${
                             ordenPrecio === orden
-                            ? 'bg-gradient-to-r from-cyan-600 to-purple-600 border-transparent shadow-lg shadow-cyan-500/30'
+                           ? 'bg-gradient-to-r from-cyan-600 to-purple-600 border-transparent shadow-lg shadow-cyan-500/30'
                               : 'backdrop-blur-xl bg-white/5 border-white/10 hover:border-cyan-500/50'
                           }`}
                         >
@@ -343,7 +358,7 @@ export default function Tienda() {
                       onClick={() => setSoloPremium(!soloPremium)}
                       className={`w-full px-4 py-2 rounded-xl border flex items-center justify-center gap-2 transition-all ${
                         soloPremium
-                        ? 'bg-gradient-to-r from-cyan-600 to-purple-600 border-transparent shadow-lg shadow-cyan-500/30'
+                       ? 'bg-gradient-to-r from-cyan-600 to-purple-600 border-transparent shadow-lg shadow-cyan-500/30'
                           : 'backdrop-blur-xl bg-white/5 border-white/10 hover:border-cyan-500/50'
                       }`}
                     >
@@ -411,71 +426,105 @@ export default function Tienda() {
         <AnimatePresence mode="popLayout">
           {cargando? (
             [...Array(8)].map((_, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="backdrop-blur-xl bg-white/5 rounded-2xl h-96 border-white/10 animate-pulse"
-              />
+              <div key={i} className="backdrop-blur-xl bg-white/5 rounded-2xl h-96 border-white/10 animate-pulse" />
             ))
           ) : (
-            productosFiltrados.map((p, i) => (
-              <motion.div
-                key={p.id}
-                layout
-                initial={{ opacity: 0, y: 50, rotateX: -15 }}
-                animate={{ opacity: 1, y: 0, rotateX: 0 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                transition={{ duration: 0.5, delay: i * 0.08, type: "spring" }}
-                whileHover={{ y: -12, rotateX: 5 }}
-                className="group relative"
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-purple-600 rounded-2xl blur-xl opacity-0 group-hover:opacity-40 transition-opacity duration-300" />
+            productosFiltrados.map((p, i) => {
+              const imagenes = p.imagenes || [p.imagen]
+              const idxActual = indiceImagen[p.id] || 0
 
-                <div className="relative backdrop-blur-2xl bg-white/5 rounded-2xl overflow-hidden border-white/10 group-hover:border-cyan-500/50 transition-all">
-                  <div className="relative overflow-hidden h-72">
-                    <img
-                      src={p.imagen}
-                      alt={p.nombre}
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                    {p.premium && (
-                      <motion.div
-                        initial={{ scale: 0, rotate: -180 }}
-                        animate={{ scale: 1, rotate: 0 }}
-                        transition={{ delay: 0.2 + i * 0.05, type: "spring" }}
-                        className="absolute top-4 right-4 bg-gradient-to-r from-cyan-500 to-purple-500 px-4 py-2 rounded-full text-xs font-black flex items-center gap-1 shadow-lg shadow-purple-500/50"
+              return (
+                <motion.div
+                  key={p.id}
+                  layout
+                  initial={{ opacity: 0, y: 50 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  transition={{ duration: 0.5, delay: i * 0.08 }}
+                  className="group relative"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-purple-600 rounded-2xl blur-xl opacity-0 group-hover:opacity-40 transition-opacity duration-300" />
+
+                  <div className="relative backdrop-blur-2xl bg-white/5 rounded-2xl overflow-hidden border-white/10 group-hover:border-cyan-500/50 transition-all">
+                    <div className="relative overflow-hidden h-72">
+                      <img
+                        src={imagenes[idxActual]}
+                        alt={p.nombre}
+                        className="w-full h-full object-cover cursor-pointer transition-transform duration-700 group-hover:scale-110"
+                        onClick={() => setModalImagen(imagenes[idxActual])}
+                      />
+
+                      <button
+                        onClick={() => setModalImagen(imagenes[idxActual])}
+                        className="absolute top-3 right-3 bg-black/50 backdrop-blur-xl p-2 rounded-full opacity-0 group-hover:opacity-100 transition"
                       >
-                        <Crown size={14} fill="currentColor" /> PREMIUM
-                      </motion.div>
-                    )}
-                  </div>
+                        <ZoomIn size={18} />
+                      </button>
 
-                  <div className="p-6">
-                    <p className="text-xs text-cyan-400/60 mb-2 uppercase tracking-wider">{p.categoria}</p>
-                    <h3 className="text-xl font-bold mb-3 group-hover:text-cyan-400 transition-colors line-clamp-2">
-                      {p.nombre}
-                    </h3>
-                    <p className="text-4xl font-black bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent mb-5">
-                      ${Number(p.precio).toLocaleString()}
-                    </p>
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => comprarWpp(p)}
-                      className="w-full relative overflow-hidden group/btn"
-                    >
-                      <div className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-purple-600 transition-transform group-hover/btn:scale-110" />
-                      <span className="relative flex items-center justify-center gap-2 bg-black/80 py-3 rounded-xl font-bold backdrop-blur-sm group-hover/btn:bg-transparent transition-all">
-                        <MessageCircle size={20} />
-                        Comprar Ahora
-                      </span>
-                    </motion.button>
+                      {imagenes.length > 1 && (
+                        <>
+                          <button
+                            onClick={() => cambiarImagen(p.id, -1, imagenes.length)}
+                            className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 backdrop-blur-xl p-2 rounded-full opacity-0 group-hover:opacity-100 transition"
+                          >
+                            <ChevronLeft size={20} />
+                          </button>
+                          <button
+                            onClick={() => cambiarImagen(p.id, 1, imagenes.length)}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 backdrop-blur-xl p-2 rounded-full opacity-0 group-hover:opacity-100 transition"
+                          >
+                            <ChevronRight size={20} />
+                          </button>
+                          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2">
+                            {imagenes.map((_, idx) => (
+                              <div
+                                key={idx}
+                                className={`w-2 h-2 rounded-full transition-all ${
+                                  idx === idxActual? 'bg-cyan-400 w-6' : 'bg-white/40'
+                                }`}
+                              />
+                            ))}
+                          </div>
+                        </>
+                      )}
+
+                      {p.premium && (
+                        <motion.div
+                          initial={{ scale: 0, rotate: -180 }}
+                          animate={{ scale: 1, rotate: 0 }}
+                          transition={{ delay: 0.2 + i * 0.05, type: "spring" }}
+                          className="absolute top-4 left-4 bg-gradient-to-r from-cyan-500 to-purple-500 px-4 py-2 rounded-full text-xs font-black flex items-center gap-1 shadow-lg shadow-purple-500/50"
+                        >
+                          <Crown size={14} fill="currentColor" /> PREMIUM
+                        </motion.div>
+                      )}
+                    </div>
+
+                    <div className="p-6">
+                      <p className="text-xs text-cyan-400/60 mb-2 uppercase tracking-wider">{p.categoria}</p>
+                      <h3 className="text-xl font-bold mb-3 group-hover:text-cyan-400 transition-colors line-clamp-2">
+                        {p.nombre}
+                      </h3>
+                      <p className="text-4xl font-black bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent mb-5">
+                        ${Number(p.precio).toLocaleString()}
+                      </p>
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => comprarWpp(p)}
+                        className="w-full relative overflow-hidden group/btn"
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-purple-600 transition-transform group-hover/btn:scale-110" />
+                        <span className="relative flex items-center justify-center gap-2 bg-black/80 py-3 rounded-xl font-bold backdrop-blur-sm group-hover/btn:bg-transparent transition-all">
+                          <MessageCircle size={20} />
+                          Comprar Ahora
+                        </span>
+                      </motion.button>
+                    </div>
                   </div>
-                </div>
-              </motion.div>
-            ))
+                </motion.div>
+              )
+            })
           )}
         </AnimatePresence>
       </div>
@@ -503,42 +552,26 @@ export default function Tienda() {
           className="max-w-7xl mx-auto px-6"
         >
           <div className="grid md:grid-cols-3 gap-8 mb-8 text-center md:text-left">
-
             <div>
               <p className="mb-4 text-cyan-400 font-black text-lg tracking-wider">CONTÁCTANOS</p>
               <div className="space-y-3">
-                <motion.a
-                  whileHover={{ x: 5 }}
-                  href={`https://wa.me/57${WPP1}`}
-                  target="_blank"
-                  className="flex items-center justify-center md:justify-start gap-2 hover:text-cyan-400 transition text-gray-400"
-                >
+                <a href={`https://wa.me/57${WPP1}`} target="_blank" className="flex items-center justify-center md:justify-start gap-2 hover:text-cyan-400 transition text-gray-400">
                   <MessageCircle size={20} /> 315 110 1628
-                </motion.a>
-                <motion.a
-                  whileHover={{ x: 5 }}
-                  href={`https://wa.me/57${WPP2}`}
-                  target="_blank"
-                  className="flex items-center justify-center md:justify-start gap-2 hover:text-cyan-400 transition text-gray-400"
-                >
+                </a>
+                <a href={`https://wa.me/57${WPP2}`} target="_blank" className="flex items-center justify-center md:justify-start gap-2 hover:text-cyan-400 transition text-gray-400">
                   <MessageCircle size={20} /> 317 481 1805
-                </motion.a>
+                </a>
               </div>
             </div>
 
             <div>
               <p className="mb-4 text-purple-400 font-black text-lg tracking-wider">SÍGUENOS</p>
-              <motion.a
-                whileHover={{ scale: 1.05, y: -2 }}
-                href={`https://instagram.com/${IG}`}
-                target="_blank"
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600/20 to-pink-600/20 border-purple-500/30 hover:border-purple-500/60 transition-all"
-              >
+              <a href={`https://instagram.com/${IG}`} target="_blank" className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600/20 to-pink-600/20 border-purple-500/30 hover:border-purple-500/60 transition-all">
                 <svg className="w-5 h-5 text-pink-400" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.979 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
                 </svg>
                 <span className="text-white font-semibold">@{IG}</span>
-              </motion.a>
+              </a>
             </div>
 
             <div>
